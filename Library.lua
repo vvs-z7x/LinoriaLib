@@ -2961,52 +2961,76 @@ function Library:CreateWindow(...)
     if type(Config.TabPadding) ~= 'number' then Config.TabPadding = 0 end
     if type(Config.MenuFadeTime) ~= 'number' then Config.MenuFadeTime = 0.2 end
 
-    if typeof(Config.Position) ~= 'UDim2' then Config.Position = UDim2.fromOffset(175, 50) end
-    if typeof(Config.Size) ~= 'UDim2' then Config.Size = UDim2.fromOffset(900, 600) end
-
-    print("[LOCAL Library.lua] Config.Size =", Config.Size)
-
-    if Config.Center then
-        Config.AnchorPoint = Vector2.new(0.5, 0.5)
-        Config.Position = UDim2.fromScale(0.5, 0.5)
+    -- Window dimensions - change these to resize the window
+    local WINDOW_WIDTH = 900
+    local WINDOW_HEIGHT = 600
+    
+    -- Override with Config if provided
+    if typeof(Config.Size) == 'UDim2' then
+        WINDOW_WIDTH = Config.Size.X.Offset
+        WINDOW_HEIGHT = Config.Size.Y.Offset
     end
 
     local Window = {
         Tabs = {};
+        Width = WINDOW_WIDTH;
+        Height = WINDOW_HEIGHT;
     };
 
-    -- Hardcode window dimensions to test if Config.Size is the problem
-    local WindowWidth = 900
-    local WindowHeight = 600
+    -- Calculate derived dimensions
+    local INNER_PADDING = 1
+    local SECTION_PADDING = 8
+    local TITLE_HEIGHT = 25
+    local TAB_AREA_HEIGHT = 21
+    local TAB_CONTAINER_TOP = 30
     
-    local Outer = Library:Create('Frame', {
-        AnchorPoint = Config.AnchorPoint,
-        BackgroundColor3 = Color3.new(0, 0, 0);
-        BorderSizePixel = 0;
-        Position = Config.Position,
-        Size = UDim2.new(0, WindowWidth, 0, WindowHeight);
-        Visible = false;
-        ZIndex = 1;
-        Parent = ScreenGui;
-    });
+    local innerWidth = WINDOW_WIDTH - (INNER_PADDING * 2)
+    local innerHeight = WINDOW_HEIGHT - (INNER_PADDING * 2)
+    local sectionWidth = innerWidth - (SECTION_PADDING * 2)
+    local sectionHeight = innerHeight - TITLE_HEIGHT - SECTION_PADDING
+    local tabContainerWidth = sectionWidth - (SECTION_PADDING * 2)
+    local tabContainerHeight = sectionHeight - TAB_CONTAINER_TOP - SECTION_PADDING
+    local sideWidth = math.floor((tabContainerWidth - 16) / 2)
+    local sideHeight = tabContainerHeight - 16
 
-    -- Debug: Print the actual size after creation
-    task.defer(function()
-        print("[DEBUG] Outer.Size =", Outer.Size)
-        print("[DEBUG] Outer.AbsoluteSize =", Outer.AbsoluteSize)
-    end)
+    -- Calculate position
+    local windowX, windowY
+    if Config.Center then
+        Config.AnchorPoint = Vector2.new(0.5, 0.5)
+        windowX = 0.5
+        windowY = 0.5
+    else
+        Config.AnchorPoint = Vector2.zero
+        windowX = Config.Position and Config.Position.X.Offset or 175
+        windowY = Config.Position and Config.Position.Y.Offset or 50
+    end
+
+    -- Create main window frame with explicit pixel size
+    local Outer = Instance.new('Frame')
+    Outer.Name = 'LinoriaWindow'
+    Outer.AnchorPoint = Config.AnchorPoint
+    Outer.BackgroundColor3 = Color3.new(0, 0, 0)
+    Outer.BorderSizePixel = 0
+    if Config.Center then
+        Outer.Position = UDim2.fromScale(0.5, 0.5)
+    else
+        Outer.Position = UDim2.fromOffset(windowX, windowY)
+    end
+    Outer.Size = UDim2.fromOffset(WINDOW_WIDTH, WINDOW_HEIGHT)
+    Outer.Visible = false
+    Outer.ZIndex = 1
+    Outer.Parent = ScreenGui
 
     Library:MakeDraggable(Outer, 25);
 
-    local Inner = Library:Create('Frame', {
-        BackgroundColor3 = Library.MainColor;
-        BorderColor3 = Library.AccentColor;
-        BorderMode = Enum.BorderMode.Inset;
-        Position = UDim2.new(0, 1, 0, 1);
-        Size = UDim2.new(1, -2, 1, -2);
-        ZIndex = 1;
-        Parent = Outer;
-    });
+    local Inner = Instance.new('Frame')
+    Inner.BackgroundColor3 = Library.MainColor
+    Inner.BorderColor3 = Library.AccentColor
+    Inner.BorderMode = Enum.BorderMode.Inset
+    Inner.Position = UDim2.fromOffset(INNER_PADDING, INNER_PADDING)
+    Inner.Size = UDim2.fromOffset(innerWidth, innerHeight)
+    Inner.ZIndex = 1
+    Inner.Parent = Outer
 
     Library:AddToRegistry(Inner, {
         BackgroundColor3 = 'MainColor';
@@ -3014,65 +3038,61 @@ function Library:CreateWindow(...)
     });
 
     local WindowLabel = Library:CreateLabel({
-        Position = UDim2.new(0, 7, 0, 0);
-        Size = UDim2.new(0, 0, 0, 25);
+        Position = UDim2.fromOffset(7, 0);
+        Size = UDim2.fromOffset(innerWidth - 14, TITLE_HEIGHT);
         Text = Config.Title or '';
         TextXAlignment = Enum.TextXAlignment.Left;
         ZIndex = 1;
         Parent = Inner;
     });
 
-    local MainSectionOuter = Library:Create('Frame', {
-        BackgroundColor3 = Library.BackgroundColor;
-        BorderColor3 = Library.OutlineColor;
-        Position = UDim2.new(0, 8, 0, 25);
-        Size = UDim2.new(1, -16, 1, -33);
-        ZIndex = 1;
-        Parent = Inner;
-    });
+    local MainSectionOuter = Instance.new('Frame')
+    MainSectionOuter.BackgroundColor3 = Library.BackgroundColor
+    MainSectionOuter.BorderColor3 = Library.OutlineColor
+    MainSectionOuter.Position = UDim2.fromOffset(SECTION_PADDING, TITLE_HEIGHT)
+    MainSectionOuter.Size = UDim2.fromOffset(sectionWidth, sectionHeight)
+    MainSectionOuter.ZIndex = 1
+    MainSectionOuter.Parent = Inner
 
     Library:AddToRegistry(MainSectionOuter, {
         BackgroundColor3 = 'BackgroundColor';
         BorderColor3 = 'OutlineColor';
     });
 
-    local MainSectionInner = Library:Create('Frame', {
-        BackgroundColor3 = Library.BackgroundColor;
-        BorderColor3 = Color3.new(0, 0, 0);
-        BorderMode = Enum.BorderMode.Inset;
-        Position = UDim2.new(0, 0, 0, 0);
-        Size = UDim2.new(1, 0, 1, 0);
-        ZIndex = 1;
-        Parent = MainSectionOuter;
-    });
+    local MainSectionInner = Instance.new('Frame')
+    MainSectionInner.BackgroundColor3 = Library.BackgroundColor
+    MainSectionInner.BorderColor3 = Color3.new(0, 0, 0)
+    MainSectionInner.BorderMode = Enum.BorderMode.Inset
+    MainSectionInner.Position = UDim2.fromOffset(0, 0)
+    MainSectionInner.Size = UDim2.fromOffset(sectionWidth, sectionHeight)
+    MainSectionInner.ZIndex = 1
+    MainSectionInner.Parent = MainSectionOuter
 
     Library:AddToRegistry(MainSectionInner, {
         BackgroundColor3 = 'BackgroundColor';
     });
 
-    local TabArea = Library:Create('Frame', {
-        BackgroundTransparency = 1;
-        Position = UDim2.new(0, 8, 0, 8);
-        Size = UDim2.new(1, -16, 0, 21);
-        ZIndex = 1;
-        Parent = MainSectionInner;
-    });
+    local TabArea = Instance.new('Frame')
+    TabArea.BackgroundTransparency = 1
+    TabArea.Position = UDim2.fromOffset(SECTION_PADDING, SECTION_PADDING)
+    TabArea.Size = UDim2.fromOffset(tabContainerWidth, TAB_AREA_HEIGHT)
+    TabArea.ZIndex = 1
+    TabArea.Parent = MainSectionInner
 
     local TabListLayout = Library:Create('UIListLayout', {
-        Padding = UDim.new(0, 0);
+        Padding = UDim.new(0, Config.TabPadding);
         FillDirection = Enum.FillDirection.Horizontal;
         SortOrder = Enum.SortOrder.LayoutOrder;
         Parent = TabArea;
     });
 
-    local TabContainer = Library:Create('Frame', {
-        BackgroundColor3 = Library.MainColor;
-        BorderColor3 = Library.OutlineColor;
-        Position = UDim2.new(0, 8, 0, 30);
-        Size = UDim2.new(1, -16, 1, -38);
-        ZIndex = 2;
-        Parent = MainSectionInner;
-    });
+    local TabContainer = Instance.new('Frame')
+    TabContainer.BackgroundColor3 = Library.MainColor
+    TabContainer.BorderColor3 = Library.OutlineColor
+    TabContainer.Position = UDim2.fromOffset(SECTION_PADDING, TAB_CONTAINER_TOP)
+    TabContainer.Size = UDim2.fromOffset(tabContainerWidth, tabContainerHeight)
+    TabContainer.ZIndex = 2
+    TabContainer.Parent = MainSectionInner
     
 
     Library:AddToRegistry(TabContainer, {
@@ -3095,7 +3115,7 @@ function Library:CreateWindow(...)
         local TabButton = Library:Create('Frame', {
             BackgroundColor3 = Library.BackgroundColor;
             BorderColor3 = Library.OutlineColor;
-            Size = UDim2.new(0, TabButtonWidth + 8, 1, 0);
+            Size = UDim2.fromOffset(TabButtonWidth + 8, TAB_AREA_HEIGHT);
             ZIndex = 1;
             Parent = TabArea;
         });
@@ -3106,8 +3126,8 @@ function Library:CreateWindow(...)
         });
 
         local TabButtonLabel = Library:CreateLabel({
-            Position = UDim2.new(0, 0, 0, 0);
-            Size = UDim2.new(1, 0, 1, -1);
+            Position = UDim2.fromOffset(0, 0);
+            Size = UDim2.fromOffset(TabButtonWidth + 8, TAB_AREA_HEIGHT - 1);
             Text = Name;
             ZIndex = 1;
             Parent = TabButton;
@@ -3117,7 +3137,7 @@ function Library:CreateWindow(...)
             BackgroundColor3 = Library.MainColor;
             BorderSizePixel = 0;
             Position = UDim2.new(0, 0, 1, 0);
-            Size = UDim2.new(1, 0, 0, 1);
+            Size = UDim2.fromOffset(TabButtonWidth + 8, 1);
             BackgroundTransparency = 1;
             ZIndex = 3;
             Parent = TabButton;
@@ -3127,41 +3147,38 @@ function Library:CreateWindow(...)
             BackgroundColor3 = 'MainColor';
         });
 
-        local TabFrame = Library:Create('Frame', {
-            Name = 'TabFrame',
-            BackgroundTransparency = 1;
-            Position = UDim2.new(0, 0, 0, 0);
-            Size = UDim2.new(1, 0, 1, 0);
-            Visible = false;
-            ZIndex = 2;
-            Parent = TabContainer;
-        });
+        local TabFrame = Instance.new('Frame')
+        TabFrame.Name = 'TabFrame'
+        TabFrame.BackgroundTransparency = 1
+        TabFrame.Position = UDim2.fromOffset(0, 0)
+        TabFrame.Size = UDim2.fromOffset(tabContainerWidth, tabContainerHeight)
+        TabFrame.Visible = false
+        TabFrame.ZIndex = 2
+        TabFrame.Parent = TabContainer
 
-        local LeftSide = Library:Create('ScrollingFrame', {
-            BackgroundTransparency = 1;
-            BorderSizePixel = 0;
-            Position = UDim2.new(0, 8 - 1, 0, 8 - 1);
-            Size = UDim2.new(0.5, -12 + 2, 0, 507 + 2);
-            CanvasSize = UDim2.new(0, 0, 0, 0);
-            BottomImage = '';
-            TopImage = '';
-            ScrollBarThickness = 0;
-            ZIndex = 2;
-            Parent = TabFrame;
-        });
+        local LeftSide = Instance.new('ScrollingFrame')
+        LeftSide.BackgroundTransparency = 1
+        LeftSide.BorderSizePixel = 0
+        LeftSide.Position = UDim2.fromOffset(7, 7)
+        LeftSide.Size = UDim2.fromOffset(sideWidth, sideHeight)
+        LeftSide.CanvasSize = UDim2.fromOffset(0, 0)
+        LeftSide.BottomImage = ''
+        LeftSide.TopImage = ''
+        LeftSide.ScrollBarThickness = 0
+        LeftSide.ZIndex = 2
+        LeftSide.Parent = TabFrame
 
-        local RightSide = Library:Create('ScrollingFrame', {
-            BackgroundTransparency = 1;
-            BorderSizePixel = 0;
-            Position = UDim2.new(0.5, 4 + 1, 0, 8 - 1);
-            Size = UDim2.new(0.5, -12 + 2, 0, 507 + 2);
-            CanvasSize = UDim2.new(0, 0, 0, 0);
-            BottomImage = '';
-            TopImage = '';
-            ScrollBarThickness = 0;
-            ZIndex = 2;
-            Parent = TabFrame;
-        });
+        local RightSide = Instance.new('ScrollingFrame')
+        RightSide.BackgroundTransparency = 1
+        RightSide.BorderSizePixel = 0
+        RightSide.Position = UDim2.fromOffset(sideWidth + 13, 7)
+        RightSide.Size = UDim2.fromOffset(sideWidth, sideHeight)
+        RightSide.CanvasSize = UDim2.fromOffset(0, 0)
+        RightSide.BottomImage = ''
+        RightSide.TopImage = ''
+        RightSide.ScrollBarThickness = 0
+        RightSide.ZIndex = 2
+        RightSide.Parent = TabFrame
 
         Library:Create('UIListLayout', {
             Padding = UDim.new(0, 8);
