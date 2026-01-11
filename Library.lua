@@ -473,7 +473,7 @@ do
         end
 
         DisplayFrame:GetPropertyChangedSignal('AbsolutePosition'):Connect(UpdateColorPickerPosition)
-        task.defer(UpdateColorPickerPosition)
+        task.spawn(UpdateColorPickerPosition)
 
         local PickerFrameInner = Library:Create('Frame', {
             BackgroundColor3 = Library.BackgroundColor;
@@ -1072,7 +1072,7 @@ do
 
         ToggleLabel:GetPropertyChangedSignal('AbsolutePosition'):Connect(UpdateKeyPickerPosition);
         ToggleLabel:GetPropertyChangedSignal('AbsoluteSize'):Connect(UpdateKeyPickerPosition);
-        task.defer(UpdateKeyPickerPosition);
+        task.spawn(UpdateKeyPickerPosition);
 
         local ModeSelectInner = Library:Create('Frame', {
             BackgroundColor3 = Library.BackgroundColor;
