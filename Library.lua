@@ -2965,16 +2965,26 @@ function Library:CreateWindow(...)
         Tabs = {};
     };
 
+    -- Hardcode window dimensions to test if Config.Size is the problem
+    local WindowWidth = 900
+    local WindowHeight = 600
+    
     local Outer = Library:Create('Frame', {
         AnchorPoint = Config.AnchorPoint,
         BackgroundColor3 = Color3.new(0, 0, 0);
         BorderSizePixel = 0;
         Position = Config.Position,
-        Size = Config.Size,
+        Size = UDim2.new(0, WindowWidth, 0, WindowHeight);
         Visible = false;
         ZIndex = 1;
         Parent = ScreenGui;
     });
+
+    -- Debug: Print the actual size after creation
+    task.defer(function()
+        print("[DEBUG] Outer.Size =", Outer.Size)
+        print("[DEBUG] Outer.AbsoluteSize =", Outer.AbsoluteSize)
+    end)
 
     Library:MakeDraggable(Outer, 25);
 
