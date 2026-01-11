@@ -15,11 +15,21 @@ local Mouse = LocalPlayer:GetMouse();
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 
+-- Cleanup: Destroy ALL existing LinoriaLib ScreenGuis
+for _, gui in ipairs(CoreGui:GetChildren()) do
+    if gui:IsA('ScreenGui') and gui.Name == 'LinoriaLib' then
+        gui:Destroy()
+    end
+end
+
 local ScreenGui = Instance.new('ScreenGui');
+ScreenGui.Name = 'LinoriaLib'; -- Unique name for identification
 ProtectGui(ScreenGui);
 
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;
 ScreenGui.Parent = CoreGui;
+
+print("[LinoriaLib LOCAL] ScreenGui created. Total CoreGui children:", #CoreGui:GetChildren())
 
 local Toggles = {};
 local Options = {};
