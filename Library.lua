@@ -468,12 +468,9 @@ do
             Parent = ScreenGui,
         });
 
-        local function UpdateColorPickerPosition()
+        DisplayFrame:GetPropertyChangedSignal('AbsolutePosition'):Connect(function()
             PickerFrameOuter.Position = UDim2.fromOffset(DisplayFrame.AbsolutePosition.X, DisplayFrame.AbsolutePosition.Y + 18);
-        end
-
-        DisplayFrame:GetPropertyChangedSignal('AbsolutePosition'):Connect(UpdateColorPickerPosition)
-        task.spawn(UpdateColorPickerPosition)
+        end)
 
         local PickerFrameInner = Library:Create('Frame', {
             BackgroundColor3 = Library.BackgroundColor;
@@ -1066,13 +1063,9 @@ do
             Parent = ScreenGui;
         });
 
-        local function UpdateKeyPickerPosition()
+        ToggleLabel:GetPropertyChangedSignal('AbsolutePosition'):Connect(function()
             ModeSelectOuter.Position = UDim2.fromOffset(ToggleLabel.AbsolutePosition.X + ToggleLabel.AbsoluteSize.X + 4, ToggleLabel.AbsolutePosition.Y + 1);
-        end
-
-        ToggleLabel:GetPropertyChangedSignal('AbsolutePosition'):Connect(UpdateKeyPickerPosition);
-        ToggleLabel:GetPropertyChangedSignal('AbsoluteSize'):Connect(UpdateKeyPickerPosition);
-        task.spawn(UpdateKeyPickerPosition);
+        end);
 
         local ModeSelectInner = Library:Create('Frame', {
             BackgroundColor3 = Library.BackgroundColor;
@@ -1836,19 +1829,12 @@ do
         local Groupbox = self;
         local Container = Groupbox.Container;
 
-        local ToggleBuilder = Library:Create('Frame', {
-            BackgroundTransparency = 1;
-            Size = UDim2.new(1, 0, 0, 13);
-            ZIndex = 1;
-            Parent = Container;
-        });
-
         local ToggleOuter = Library:Create('Frame', {
             BackgroundColor3 = Color3.new(0, 0, 0);
             BorderColor3 = Color3.new(0, 0, 0);
             Size = UDim2.new(0, 13, 0, 13);
             ZIndex = 5;
-            Parent = ToggleBuilder;
+            Parent = Container;
         });
 
         Library:AddToRegistry(ToggleOuter, {
@@ -1876,7 +1862,7 @@ do
             Text = Info.Text;
             TextXAlignment = Enum.TextXAlignment.Left;
             ZIndex = 6;
-            Parent = ToggleBuilder;
+            Parent = Container;
         });
 
         Library:Create('UIListLayout', {
@@ -1891,7 +1877,7 @@ do
             BackgroundTransparency = 1;
             Size = UDim2.new(0, 170, 1, 0);
             ZIndex = 8;
-            Parent = ToggleBuilder;
+            Parent = ToggleOuter;
         });
 
         Library:OnHighlight(ToggleRegion, ToggleOuter,
