@@ -2071,10 +2071,10 @@ do
                 DisplayLabel.Text = string.format('%s/%s', Slider.Value .. Suffix, Slider.Max .. Suffix);
             end
 
-            local X = math.ceil(Library:MapValue(Slider.Value, Slider.Min, Slider.Max, 0, Slider.MaxSize));
-            Fill.Size = UDim2.new(0, X, 1, 0);
+            local Percent = Library:MapValue(Slider.Value, Slider.Min, Slider.Max, 0, 1);
+            Fill.Size = UDim2.new(Percent, 0, 1, 0);
 
-            HideBorderRight.Visible = not (X == Slider.MaxSize or X == 0);
+            HideBorderRight.Visible = not (Percent == 1 or Percent == 0);
         end;
 
         function Slider:OnChanged(Func)
@@ -2119,9 +2119,15 @@ do
 
                 while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
                     local nMPos = Mouse.X;
-                    local nX = math.clamp(gPos + (nMPos - mPos) + Diff, 0, Slider.MaxSize);
+                    local nX = (nMPos - SliderInner.AbsolutePosition.X);
+                    local nPercent = math.clamp(nX / SliderInner.AbsoluteSize.X, 0, 1);
+                    local nValue = math.floor(Library:MapValue(nPercent, 0, 1, Slider.Min, Slider.Max));
+                    
+                    -- Rounding
+                    if Slider.Rounding > 0 then
+                        nValue = tonumber(string.format('%.' .. Slider.Rounding .. 'f', nValue));
+                    end
 
-                    local nValue = Slider:GetValueFromXOffset(nX);
                     local OldValue = Slider.Value;
                     Slider.Value = nValue;
 
@@ -2131,7 +2137,7 @@ do
                         Library:SafeCallback(Slider.Callback, Slider.Value);
                         Library:SafeCallback(Slider.Changed, Slider.Value);
                     end;
-
+                    
                     RenderStepped:Wait();
                 end;
 
@@ -3115,7 +3121,7 @@ function Library:CreateWindow(...)
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
             Position = UDim2.new(0, 8 - 1, 0, 8 - 1);
-            Size = UDim2.new(0.5, -12 + 2, 0, 507 + 2);
+            Size = UDim2.new(0.5, -12 + 2, 1, -22);
             CanvasSize = UDim2.new(0, 0, 0, 0);
             BottomImage = '';
             TopImage = '';
@@ -3128,7 +3134,7 @@ function Library:CreateWindow(...)
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
             Position = UDim2.new(0.5, 4 + 1, 0, 8 - 1);
-            Size = UDim2.new(0.5, -12 + 2, 0, 507 + 2);
+            Size = UDim2.new(0.5, -12 + 2, 1, -22);
             CanvasSize = UDim2.new(0, 0, 0, 0);
             BottomImage = '';
             TopImage = '';
